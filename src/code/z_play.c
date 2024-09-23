@@ -257,6 +257,9 @@ void Play_Init(GameState* thisx) {
     u8 baseSceneLayer;
     s32 pad[2];
 
+    this->first_effect = NULL;
+    this->chaos_frame = 0;
+
 #if ENABLE_HACKER_DEBUG
     gDebug.play = this;
 #endif
@@ -1089,6 +1092,7 @@ skip:
         gSaveContext.cutsceneTrigger = 1;
     }
 #endif
+    Chaos_Update(this);
 }
 
 void Play_DrawOverlayElements(PlayState* this) {

@@ -1797,4 +1797,7 @@ void OcclusionPlane_Draw_PostCamUpdate(PlayState* play);
 #include "debug/profiler_inline.h"
 #endif
 
+// Chaos
+void Chaos_Update(PlayState* play);
+
 #endif

@@ -541,6 +541,7 @@ beginseg
 #if ENABLE_F3DEX3
     include "$(BUILD_DIR)/src/code/occlusionplanes.o"
 #endif
+    include "$(BUILD_DIR)/src/code/chaos.o"
 #if IS_DEBUG
     include "$(BUILD_DIR)/src/libultra/io/pfsfreeblocks.o"
 #endif
