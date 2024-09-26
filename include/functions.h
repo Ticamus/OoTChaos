@@ -1799,5 +1799,7 @@ void OcclusionPlane_Draw_PostCamUpdate(PlayState* play);
 
 // Chaos
 void Chaos_Update(PlayState* play);
+int chaos_dying(PlayState *play);
+
 
 #endif

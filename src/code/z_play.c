@@ -257,7 +257,7 @@ void Play_Init(GameState* thisx) {
     u8 baseSceneLayer;
     s32 pad[2];
 
-    this->first_effect = NULL;
+    this->chaos_effects = NULL;
     this->chaos_frame = 0;
 
 #if ENABLE_HACKER_DEBUG

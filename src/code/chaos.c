@@ -21,6 +21,9 @@ void Chaos_GenerateEffect(PlayState* play) {
         case CHAOS_RICH:
             gSaveContext.save.info.playerData.rupees = 99; // TODO : Change to max
             return;
+        case CHAOS_DEATH:
+            // gSaveContext.save.info.playerData.health = 0;
+            return;
         default:
             gSaveContext.healthAccumulator -= 50;
             osSyncPrintf("UNKNOWN EFFECT %d\n", effectId);
@@ -29,7 +32,22 @@ void Chaos_GenerateEffect(PlayState* play) {
 
     // then : effects that needs an entry
     new_effect = ZeldaArena_Malloc(sizeof(Chaos_Effect));
-    
+    new_effect->prev_effect = NULL;
+    switch (effectId) {
+        case CHAOS_DYING:
+            new_effect->effectId = CHAOS_DYING;
+            new_effect->destroy_effect = NULL;
+            new_effect->chaos_timer = CHAOS_DURATION * 20;
+            new_effect->apply_effect = chaos_dying;
+            break;
+        default:
+            osSyncPrintf("UNKNOWN EFFECT %d\n", effectId);
+            return;
+    }
+    if (play->chaos_effects)
+        play->chaos_effects->prev_effect = new_effect;
+    new_effect->next_effect = play->chaos_effects;
+    play->chaos_effects = new_effect;
 }
 
 void Chaos_Update(PlayState* play) {
@@ -37,8 +55,9 @@ void Chaos_Update(PlayState* play) {
     Chaos_Effect* actual_effect;
     play->chaos_frame++;
 
-    for (actual_effect = play->first_effect; actual_effect != NULL; actual_effect = actual_effect->next_effect) {
-        if (actual_effect->apply_effect(play)) {
+    for (actual_effect = play->chaos_effects; actual_effect != NULL; actual_effect = actual_effect->next_effect) {
+        actual_effect->chaos_timer--;
+        if (actual_effect->chaos_timer == 0 || actual_effect->apply_effect(play)) {
             Chaos_Effect* temp = actual_effect;
 
             if (actual_effect->destroy_effect) {
