@@ -2,12 +2,8 @@
 
 /**
  * TODO:
- * - bean bought flag
- * - @bug where pressing A when having broken knife or BGS does nothing
  * - code cleanup
  * - @bug when switching from info to hud edit
- * - @bug the magic bar doesn't update properly (in the misc screen and after closing it)
- * - improvement: add the possibility to remove the magic meter (draw "None"?)
  */
 
 #include "global.h"
@@ -356,6 +352,14 @@ void InventoryEditor_UpdateEquipmentScreen(InventoryEditor* this) {
             } else {
                 // delete equipment for selected slot
                 gSaveContext.save.info.inventory.equipment &= ~OWNED_EQUIP_FLAG(equip, (value % 3));
+                if (this->common.selectedSlot == SLOT_SWORD_BIGGORON) {
+                    gSaveContext.save.info.inventory.equipment &= 
+                        ~OWNED_EQUIP_FLAG(EQUIP_TYPE_SWORD, EQUIP_INV_SWORD_BIGGORON);
+                    gSaveContext.save.info.inventory.equipment &=
+                        ~OWNED_EQUIP_FLAG_ALT(EQUIP_TYPE_SWORD, EQUIP_INV_SWORD_BROKENGIANTKNIFE);
+                    gSaveContext.save.info.playerData.bgsFlag = false;
+                    gSaveContext.save.info.playerData.swordHealth = 8;
+                }
             }
         } else {
             u8 slotIndex = this->common.selectedSlot / 4;
@@ -407,10 +411,10 @@ void InventoryEditor_UpdateEquipmentScreen(InventoryEditor* this) {
                 u8 equipValue = EQUIP_INV_SWORD_KOKIRI;
                 u16 swordHealth = 1;
 
-                if (gSaveContext.save.info.playerData.bgsFlag) {
+                if (gSaveContext.save.info.playerData.bgsFlag) { // if current sword is bgs
                     gSaveContext.save.info.playerData.bgsFlag = false;
 
-                    if (this->common.changeBy > 0) {
+                    if (this->common.changeBy > 0) { // and we go to the next one
                         swordHealth = 0;
                         equipValue = EQUIP_INV_SWORD_BROKENGIANTKNIFE;
                     } else {
@@ -418,21 +422,19 @@ void InventoryEditor_UpdateEquipmentScreen(InventoryEditor* this) {
                         equipValue = EQUIP_INV_SWORD_BIGGORON;
                     }
                 } else {
-                    if (gSaveContext.save.info.playerData.swordHealth > 0) {
-                        if (this->common.changeBy > 0) {
-                            if (gSaveContext.save.info.playerData.swordHealth > 0) {
-                                gSaveContext.save.info.playerData.bgsFlag = true;
-                            }
+                    if (gSaveContext.save.info.playerData.swordHealth > 0) { // if current sword is gk
+                        if (this->common.changeBy > 0) { // and we go to the next one
+                            gSaveContext.save.info.playerData.bgsFlag = true;
                         } else {
                             swordHealth = 0;
                             equipValue = EQUIP_INV_SWORD_BROKENGIANTKNIFE;
                         }
-                    } else {
+                    } else { // else current sword is gk (broken)
                         if (this->common.changeBy < 0) {
-                            gSaveContext.save.info.playerData.bgsFlag = true;
+                            gSaveContext.save.info.playerData.bgsFlag = true; // set to bgs
                         } else {
                             swordHealth = 8;
-                            equipValue = EQUIP_INV_SWORD_BIGGORON;
+                            equipValue = EQUIP_INV_SWORD_BIGGORON; // set to gk
                         }
                     }
                 }
@@ -462,6 +464,9 @@ void InventoryEditor_UpdateItemScreen(InventoryEditor* this) {
             u8 item = INVEDITOR_GET_VARIABLE_ITEM(this); // restore the special item
             gSaveContext.save.info.inventory.items[this->common.selectedSlot] =
                 (item == ITEM_NONE) ? sSlotToItems[this->common.selectedSlot] : item;
+            if (this->common.selectedSlot == SLOT_MAGIC_BEAN) {
+                BEANS_BOUGHT = AMMO(ITEM_MAGIC_BEAN);
+            }
         } else {
             // Delete the selected item
             Inventory_DeleteItem(this->common.selectedItem, this->common.selectedSlot);
@@ -481,16 +486,13 @@ void InventoryEditor_UpdateItemScreen(InventoryEditor* this) {
             case SLOT_BOW:
             case SLOT_SLINGSHOT:
             case SLOT_BOMBCHU:
-            case SLOT_MAGIC_BEAN:
-                AMMO(this->common.selectedItem) += this->common.changeBy;
-
-                if (AMMO(this->common.selectedItem) > 99) {
-                    AMMO(this->common.selectedItem) = 0;
-                }
-
-                if (AMMO(this->common.selectedItem) < 0) {
-                    AMMO(this->common.selectedItem) = 99;
-                }
+                AMMO(this->common.selectedItem) = CLAMP(AMMO(this->common.selectedItem) + this->common.changeBy, 0, 99);
+                break;
+            case SLOT_MAGIC_BEAN:;
+                u8 next_ammo;
+                next_ammo = CLAMP(AMMO(this->common.selectedItem) + this->common.changeBy, 0, 99);
+                AMMO(this->common.selectedItem) = next_ammo;
+                BEANS_BOUGHT = next_ammo;
                 break;
             case SLOT_BOTTLE_1:
             case SLOT_BOTTLE_2:
